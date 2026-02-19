@@ -1,14 +1,42 @@
 pipeline {
     agent any
+
     stages {
-        stage('Clone Repo') {
+
+        stage('Build Backend Image') {
             steps {
-                git 'https://github.com/Harshita100/CC_Lab-6.git'
+                sh '''
+                docker build -t backend-app ./backend
+                '''
             }
         }
-        stage('Build') {
+
+        stage('Deploy Backend') {
             steps {
-                sh 'echo "Build successful"'
+                sh '''
+                docker rm -f backend1 backend2 || true
+                docker run -d --name backend1 backend-app
+                '''
+            }
+        }
+
+        stage('Build NGINX Image') {
+            steps {
+                sh '''
+                docker build -t nginx-lb ./nginx
+                '''
+            }
+        }
+
+        stage('Deploy NGINX') {
+            steps {
+                sh '''
+                docker rm -f nginx-lb || true
+                docker run -d \
+                  --name nginx-lb \
+                  -p 80:80 \
+                  nginx-lb
+                '''
             }
         }
     }
